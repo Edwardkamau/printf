@@ -1,6 +1,21 @@
 #include "main.h"
 
 /**
+ * _buffer - print contents of the buffer
+ * @buffer: charcter array
+ * @index: index for the  next character
+ *
+ * Return: nothing
+ */
+
+void _buffer(char buffer[], int *index)
+{
+	if (*index > 0)
+		write(1, &buffer[0], *index);
+	*index = 0;
+}
+
+/**
  * _printf - produces output according to a format
  *
  * @format: pointer to string
@@ -11,42 +26,43 @@
 int _printf(const char *format, ...)
 {
 	va_list pa;
-	int count = 0, i = 0;
-	char c, *str;
+	int i, count_chars = 0, ind = 0;
+	int fl, breadth, pre, size, b_ind = 0;
+	char buff[BUFFER_SIZE];
+
+	if (format == NULL)
+		return (-1);
 
 	va_start(pa, format);
-	while (format && format[i])
+	
+	i = 0;;
+	while (format && format[i] != '\0')
 	{
 		if (format[i] == '%')
 		{
-			i++;
-			switch (format[i])
-			{
-				case 'c':
-					c = va_arg(pa, int);
-					write(1, &c, 1);
-					count++;
-					break;
-				case 's':
-					str = va_arg(pa, char *);
-					while (*str)
-						write(1, str, 1);
-						str++;
-						count++;
-					break;
-				case '%':
-					write(1, "%", 1);
-					count++;
-					break;
-			}
+			_buffer(buff, &b_ind);
+			fl = _flags(format, &i);
+			breadth = _width(format, &i, pa);
+			pre = _precision(format, &i, pa);
+			size = get_size(format, &i);
+			++i;
+			ind = print_handler(format, &i, pa, buff,
+					fl, breadth, pre, size);
+			if (ind == -1)
+				return (-1);
+			count_chars += ind;
 		}
 		else
 		{
-			write(1, &format[i], 1);
-			count++;
+			buff[b_ind++] = format[i];
+			if (b_ind == BUFFER_SIZE)
+				_buffer(buff, &b_ind);
+			count_chars++;
 		}
 		i++;
 	}
+	_buffer(buff, &b_ind);
+
 	va_end(pa);
-	return (count);
+	return (count_chars);
 }
